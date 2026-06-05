@@ -12,6 +12,10 @@ A dependency-free public-beta prototype for validating a mental math training ar
 - Mock Pro subscription CTA that records purchase intent without collecting payment.
 - PWA manifest and service worker for installable/offline behavior when served over HTTP.
 
+## Visual Direction
+
+The current redesign branch tests a competitive math arcade identity: hard scoreboard borders, retro calculator answer panels, chess-clock battle timing, and sports league standings. It intentionally removes the earlier glassy/gradient SaaS look.
+
 ## Run Locally
 
 Open `index.html` directly in a browser, or serve the folder over HTTP:

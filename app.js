@@ -271,7 +271,7 @@ function resetSolo(render = true) {
   setFormsEnabled(false, battle.active);
   if (render) {
     els.soloQuestion.textContent = "Ready";
-    els.soloFeedback.textContent = "Pick a mode and start the drill.";
+  els.soloFeedback.textContent = "Pick a board and start the drill.";
     els.soloFeedback.className = "feedback";
     renderSolo();
   }
@@ -739,9 +739,9 @@ function clearLocalData() {
   rank.level = state.selectedRankLevel;
   els.queueBattle.disabled = false;
   els.battleQuestion.textContent = "Queue for a match";
-  els.battleFeedback.textContent = "Win battles to climb the season board.";
+  els.battleFeedback.textContent = "Win battles to climb the league table.";
   els.battleFeedback.className = "feedback";
-  els.queueCopy.textContent = "Bot-backed matching keeps early battles instant.";
+  els.queueCopy.textContent = "House opponents keep the board moving.";
   renderAll();
 }
 
@@ -819,53 +819,47 @@ function drawArenaCanvas() {
   const width = canvas.width;
   const height = canvas.height;
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#101412";
+  ctx.fillStyle = "#11100d";
   ctx.fillRect(0, 0, width, height);
 
-  for (let x = 0; x < width; x += 28) {
-    ctx.strokeStyle = x % 56 === 0 ? "rgba(244,240,232,0.16)" : "rgba(244,240,232,0.06)";
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
+  ctx.fillStyle = "#2f2a22";
+  ctx.fillRect(18, 18, width - 36, height - 36);
+  ctx.strokeStyle = "#0a0908";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(18, 18, width - 36, height - 36);
 
-  for (let y = 0; y < height; y += 28) {
-    ctx.strokeStyle = y % 56 === 0 ? "rgba(244,240,232,0.16)" : "rgba(244,240,232,0.06)";
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
+  ctx.fillStyle = "#d94832";
+  ctx.fillRect(36, 36, width - 72, 42);
+  ctx.fillStyle = "#fff8e8";
+  ctx.font = "900 24px Arial Narrow, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("MATH ARCADE LEAGUE", width / 2, 58);
 
-  const pulses = [
-    { x: 92, y: 74, r: 38, c: "#f0c84b", t: "+37" },
-    { x: 238, y: 166, r: 50, c: "#1f9d7a", t: "84/7" },
-    { x: 414, y: 88, r: 44, c: "#4db7b3", t: "16x9" },
-    { x: 526, y: 188, r: 35, c: "#e7503c", t: "-58" }
+  const lanes = [
+    { label: "ADD", value: "87", color: "#edbd3d" },
+    { label: "MUL", value: "42", color: "#2fa66f" },
+    { label: "DIV", value: "19", color: "#48a7b0" },
+    { label: "SUB", value: "64", color: "#f3ead7" }
   ];
 
-  pulses.forEach((pulse) => {
-    const gradient = ctx.createRadialGradient(pulse.x, pulse.y, 2, pulse.x, pulse.y, pulse.r);
-    gradient.addColorStop(0, `${pulse.c}dd`);
-    gradient.addColorStop(1, `${pulse.c}00`);
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(pulse.x, pulse.y, pulse.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#f4f0e8";
-    ctx.font = "800 22px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(pulse.t, pulse.x, pulse.y);
+  lanes.forEach((lane, index) => {
+    const x = 44 + index * 140;
+    ctx.fillStyle = lane.color;
+    ctx.fillRect(x, 98, 112, 82);
+    ctx.strokeStyle = "#0a0908";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x, 98, 112, 82);
+    ctx.fillStyle = "#171511";
+    ctx.font = "900 18px Arial Narrow, sans-serif";
+    ctx.fillText(lane.label, x + 56, 122);
+    ctx.font = "900 34px Courier New, monospace";
+    ctx.fillText(lane.value, x + 56, 154);
   });
 
-  ctx.strokeStyle = "rgba(240,200,75,0.62)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(92, 74);
-  ctx.lineTo(238, 166);
-  ctx.lineTo(414, 88);
-  ctx.lineTo(526, 188);
-  ctx.stroke();
+  ctx.fillStyle = "#c7d36a";
+  ctx.fillRect(48, 204, width - 96, 28);
+  ctx.fillStyle = "#1a2212";
+  ctx.font = "900 16px Courier New, monospace";
+  ctx.fillText("NEXT MATCH  45 SEC  RATING BOARD LIVE", width / 2, 219);
 }
