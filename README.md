@@ -30,6 +30,33 @@ Use this MVP to measure:
 
 All current data is stored in `localStorage`; no backend or payment provider is connected yet.
 
+## Analytics
+
+The app now sends privacy-friendly Plausible custom events when the Plausible script is active, and also keeps the latest 120 events in `localStorage` under `mentalMathArenaState.v1`.
+
+Live site domain used in the Plausible snippet:
+
+```text
+pakshingho.github.io
+```
+
+Create these custom event goals in Plausible with names that match exactly:
+
+- `Solo Start`
+- `Solo Finish`
+- `Battle Queue`
+- `Battle Start`
+- `Battle Finish`
+- `Pro Intent`
+
+Event properties include operation, level, score, accuracy, result, rating, and price fields where relevant. In a browser console, inspect the local event log with:
+
+```js
+JSON.parse(localStorage.getItem("mentalMathArenaState.v1")).analytics.events
+```
+
+For the GitHub Pages project path, filter Plausible reports to `/mental_math_arena/` if the dashboard also tracks other pages on `pakshingho.github.io`.
+
 ## Deploy With GitHub Pages
 
 1. Create an empty public repository named `mental_math_arena` under `pakshingho`.

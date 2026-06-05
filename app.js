@@ -1,6 +1,7 @@
 "use strict";
 
 const STORAGE_KEY = "mentalMathArenaState.v1";
+const ANALYTICS_EVENT_LIMIT = 120;
 const ROUND_SECONDS = 45;
 const SOLO_SECONDS = 60;
 const PLAYER_NAME = "You";
@@ -28,6 +29,10 @@ const defaultState = {
   ],
   analytics: {
     battleStarts: 0,
+    battleFinishes: 0,
+    battleQueues: 0,
+    events: [],
+    soloFinishes: 0,
     soloStarts: 0,
     paywallTaps: 0
   }
@@ -186,6 +191,10 @@ function startSolo() {
   solo.correct = 0;
   solo.current = generateQuestion(solo.op, solo.level);
   state.analytics.soloStarts += 1;
+  trackEvent("Solo Start", {
+    level: solo.level,
+    operation: solo.op
+  });
   saveState();
   setFormsEnabled(true, battle.active);
   els.soloFeedback.textContent = "Go.";
@@ -251,6 +260,15 @@ function finishSolo() {
   state.soloCorrect += solo.correct;
   state.soloAttempts += solo.attempts;
   state.streak = solo.score > 0 ? state.streak + 1 : 0;
+  state.analytics.soloFinishes += 1;
+  trackEvent("Solo Finish", {
+    accuracy: formatPercent(solo.correct, solo.attempts),
+    attempts: solo.attempts,
+    correct: solo.correct,
+    level: solo.level,
+    operation: solo.op,
+    score: solo.score
+  });
   saveState();
   setFormsEnabled(false, battle.active);
   els.soloQuestion.textContent = "Time";
@@ -263,6 +281,13 @@ function queueBattle() {
   if (battle.active || battle.queued) return;
   battle.queued = true;
   battle.botName = botNames[Math.floor(Math.random() * botNames.length)];
+  state.analytics.battleQueues += 1;
+  trackEvent("Battle Queue", {
+    level: battle.level,
+    operation: battle.op,
+    rating: state.rating
+  });
+  saveState();
   els.queueBattle.disabled = true;
   els.queueCopy.textContent = "Searching...";
   els.battleQuestion.textContent = "Matching";
@@ -280,6 +305,12 @@ function startBattle() {
   battle.botCorrect = 0;
   battle.current = generateQuestion(battle.op, battle.level);
   state.analytics.battleStarts += 1;
+  trackEvent("Battle Start", {
+    level: battle.level,
+    operation: battle.op,
+    opponent: "bot",
+    rating: state.rating
+  });
   saveState();
   els.queueCopy.textContent = `${battle.botName} joined.`;
   els.battleFeedback.textContent = "Battle live.";
@@ -350,6 +381,7 @@ function finishBattle() {
   const delta = won ? 24 : -18;
   state.rating = Math.max(100, state.rating + delta);
   state.bestBattle = Math.max(state.bestBattle, battle.playerScore);
+  state.analytics.battleFinishes += 1;
   if (won) {
     state.wins += 1;
     state.streak += 1;
@@ -357,6 +389,15 @@ function finishBattle() {
     state.losses += 1;
     state.streak = 0;
   }
+  trackEvent("Battle Finish", {
+    botScore: battle.botScore,
+    level: battle.level,
+    operation: battle.op,
+    opponent: "bot",
+    playerScore: battle.playerScore,
+    rating: state.rating,
+    result: won ? "win" : "loss"
+  });
   syncPlayerLeaderboard();
   saveState();
 
@@ -524,6 +565,12 @@ function syncPlayerLeaderboard() {
 function recordPaywallIntent() {
   state.paywallIntent += 1;
   state.analytics.paywallTaps += 1;
+  trackEvent("Pro Intent", {
+    annualPrice: "29.99",
+    monthlyPrice: "4.99",
+    rating: state.rating,
+    source: "pro_screen"
+  });
   saveState();
   renderProfile();
   els.mockSubscribe.textContent = "Intent Recorded";
@@ -578,6 +625,33 @@ function mergeState(base, saved) {
     }
   });
   return base;
+}
+
+function trackEvent(name, props = {}) {
+  const cleanProps = sanitizeEventProps({
+    app: "mental_math_arena",
+    ...props
+  });
+  state.analytics.events = [
+    {
+      name,
+      props: cleanProps,
+      timestamp: new Date().toISOString()
+    },
+    ...(state.analytics.events || [])
+  ].slice(0, ANALYTICS_EVENT_LIMIT);
+
+  if (typeof window !== "undefined" && typeof window.plausible === "function") {
+    window.plausible(name, { props: cleanProps });
+  }
+}
+
+function sanitizeEventProps(props) {
+  return Object.fromEntries(
+    Object.entries(props)
+      .filter(([, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => [key, typeof value === "number" || typeof value === "boolean" ? value : String(value)])
+  );
 }
 
 function saveState() {
