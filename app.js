@@ -4,7 +4,7 @@ const STORAGE_KEY = "mentalMathArenaState.v1";
 const ANALYTICS_EVENT_LIMIT = 120;
 const ROUND_SECONDS = 45;
 const SOLO_SECONDS = 60;
-const PLAYER_NAME = "You";
+const DEFAULT_PLAYER_NAME = "You";
 const botNames = ["Vector", "Carry", "Prime", "Quotient", "Sigma", "Dash"];
 const operations = ["add", "sub", "mul", "div"];
 
@@ -19,11 +19,12 @@ const defaultState = {
   wins: 0,
   losses: 0,
   paywallIntent: 0,
+  playerName: DEFAULT_PLAYER_NAME,
   leaderboard: [
     { name: "Nova", rating: 1215, best: 2280 },
     { name: "Flux", rating: 1168, best: 2060 },
     { name: "Talon", rating: 1095, best: 1870 },
-    { name: PLAYER_NAME, rating: 1000, best: 0 },
+    { name: DEFAULT_PLAYER_NAME, rating: 1000, best: 0, isPlayer: true },
     { name: "Mira", rating: 984, best: 1640 },
     { name: "Byte", rating: 942, best: 1510 }
   ],
@@ -87,6 +88,7 @@ function bindElements() {
     "profileStreak",
     "profileIntent",
     "soloLevelLabel",
+    "playerNameInput",
     "soloLevel",
     "startSolo",
     "resetSolo",
@@ -105,6 +107,7 @@ function bindElements() {
     "battleLevel",
     "queueBattle",
     "queueCopy",
+    "playerBattleName",
     "playerBattleScore",
     "botBattleScore",
     "playerProgress",
@@ -161,6 +164,10 @@ function bindEvents() {
   els.battleForm.addEventListener("submit", submitBattle);
   els.clearLocalData.addEventListener("click", clearLocalData);
   els.mockSubscribe.addEventListener("click", recordPaywallIntent);
+  els.playerNameInput.addEventListener("input", () => updatePlayerName(els.playerNameInput.value));
+  els.playerNameInput.addEventListener("blur", () => {
+    els.playerNameInput.value = getPlayerName();
+  });
 
   window.addEventListener("resize", drawArenaCanvas);
 }
@@ -501,6 +508,9 @@ function renderAll() {
 }
 
 function renderProfile() {
+  if (document.activeElement !== els.playerNameInput) {
+    els.playerNameInput.value = getPlayerName();
+  }
   els.profileRating.textContent = String(state.rating);
   els.profileStreak.textContent = String(state.streak);
   els.profileIntent.textContent = String(state.paywallIntent);
@@ -519,6 +529,7 @@ function renderSolo() {
 
 function renderBattle() {
   els.battleLevelLabel.textContent = String(battle.level);
+  els.playerBattleName.textContent = getPlayerName();
   els.battleTimer.textContent = String(Math.max(0, battle.timer));
   els.playerBattleScore.textContent = String(battle.playerScore);
   els.botBattleScore.textContent = String(battle.botScore);
@@ -534,7 +545,7 @@ function renderLeaderboard() {
   const rows = [...state.leaderboard].sort((a, b) => b.rating - a.rating || b.best - a.best);
   els.leaderboardRows.innerHTML = rows
     .map((entry, index) => {
-      const current = entry.name === PLAYER_NAME ? " class=\"current-player\"" : "";
+      const current = entry.isPlayer ? " class=\"current-player\"" : "";
       return `<tr${current}><td>${index + 1}</td><td>${escapeHtml(entry.name)}</td><td>${entry.rating}</td><td>${entry.best}</td></tr>`;
     })
     .join("");
@@ -553,13 +564,52 @@ function formatPercent(correct, attempts) {
 }
 
 function syncPlayerLeaderboard() {
-  const player = state.leaderboard.find((entry) => entry.name === PLAYER_NAME);
+  const playerName = getPlayerName();
+  const player =
+    state.leaderboard.find((entry) => entry.isPlayer) ||
+    state.leaderboard.find((entry) => entry.name === playerName) ||
+    state.leaderboard.find((entry) => entry.name === DEFAULT_PLAYER_NAME);
   if (player) {
+    player.isPlayer = true;
+    player.name = playerName;
     player.rating = state.rating;
     player.best = state.bestBattle;
   } else {
-    state.leaderboard.push({ name: PLAYER_NAME, rating: state.rating, best: state.bestBattle });
+    state.leaderboard.push({ name: playerName, rating: state.rating, best: state.bestBattle, isPlayer: true });
   }
+}
+
+function updatePlayerName(value) {
+  const previousName = getPlayerName();
+  const nextName = sanitizePlayerName(value);
+  state.playerName = nextName;
+  renamePlayerEntry(previousName, nextName);
+  saveState();
+  renderAll();
+}
+
+function renamePlayerEntry(previousName, nextName) {
+  const player =
+    state.leaderboard.find((entry) => entry.isPlayer) ||
+    state.leaderboard.find((entry) => entry.name === previousName) ||
+    state.leaderboard.find((entry) => entry.name === DEFAULT_PLAYER_NAME);
+  if (!player) return;
+  player.isPlayer = true;
+  player.name = nextName;
+}
+
+function getPlayerName() {
+  state.playerName = sanitizePlayerName(state.playerName);
+  return state.playerName;
+}
+
+function sanitizePlayerName(value) {
+  const clean = String(value || "")
+    .replace(/[<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 18);
+  return clean || DEFAULT_PLAYER_NAME;
 }
 
 function recordPaywallIntent() {

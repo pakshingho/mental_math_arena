@@ -29,6 +29,16 @@
           </div>
         </div>
         <div class="profile-strip" aria-label="Player stats">
+          <div class="name-card">
+            <label class="stat-label" for="playerNameInput">Name</label>
+            <input
+              id="playerNameInput"
+              maxlength="18"
+              autocomplete="nickname"
+              spellcheck="false"
+              aria-label="Player name"
+            />
+          </div>
           <div>
             <span class="stat-label">Rating</span>
             <strong id="profileRating">1000</strong>
@@ -146,7 +156,7 @@
             <section class="battle-board">
               <div class="versus-row">
                 <div class="player-tile active-player">
-                  <span class="stat-label">You</span>
+                  <span class="stat-label" id="playerBattleName">You</span>
                   <strong id="playerBattleScore">0</strong>
                   <div class="progress-track"><span id="playerProgress"></span></div>
                 </div>
