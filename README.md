@@ -29,3 +29,16 @@ Use this MVP to measure:
 - Whether users return after trying ranked battles.
 
 All current data is stored in `localStorage`; no backend or payment provider is connected yet.
+
+## Deploy With GitHub Pages
+
+1. Create an empty public repository named `mental_math_arena` under `pakshingho`.
+2. Push this local repo:
+
+```sh
+git remote add origin https://github.com/pakshingho/mental_math_arena.git
+git push -u origin main
+```
+
+3. In GitHub, open repository settings, go to Pages, and set the source to GitHub Actions.
+4. The included workflow deploys the static site from the repository root.
