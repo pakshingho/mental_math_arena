@@ -188,7 +188,22 @@
             <section class="control-panel">
               <p class="eyebrow">Season 0</p>
               <h2 id="leaderboardTitle">Leaderboard</h2>
+              <div class="segmented" aria-label="Rank operation">
+                <button class="chip active" data-rank-op="mix" type="button">Mix</button>
+                <button class="chip" data-rank-op="add" type="button">Add</button>
+                <button class="chip" data-rank-op="sub" type="button">Sub</button>
+                <button class="chip" data-rank-op="mul" type="button">Mul</button>
+                <button class="chip" data-rank-op="div" type="button">Div</button>
+              </div>
+              <label class="range-row">
+                <span>Level <strong id="rankLevelLabel">3</strong></span>
+                <input id="rankLevel" type="range" min="1" max="5" value="3" />
+              </label>
               <div class="mini-grid rank-summary">
+                <div>
+                  <span class="stat-label">Board</span>
+                  <strong id="rankBoardLabel">Mix L3</strong>
+                </div>
                 <div>
                   <span class="stat-label">Record</span>
                   <strong id="recordSummary">0-0</strong>

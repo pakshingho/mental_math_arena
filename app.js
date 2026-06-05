@@ -7,6 +7,15 @@ const SOLO_SECONDS = 60;
 const DEFAULT_PLAYER_NAME = "You";
 const botNames = ["Vector", "Carry", "Prime", "Quotient", "Sigma", "Dash"];
 const operations = ["add", "sub", "mul", "div"];
+const rankOperations = ["mix", ...operations];
+const operationLabels = {
+  add: "Addition",
+  div: "Division",
+  mix: "Mixed",
+  mul: "Multiplication",
+  sub: "Subtraction"
+};
+const rankBotNames = ["Nova", "Flux", "Talon", "Mira", "Byte", "Orbit", "Kite", "Vera"];
 
 const defaultState = {
   rating: 1000,
@@ -20,6 +29,9 @@ const defaultState = {
   losses: 0,
   paywallIntent: 0,
   playerName: DEFAULT_PLAYER_NAME,
+  selectedRankLevel: 3,
+  selectedRankOp: "mix",
+  boardStats: {},
   leaderboard: [
     { name: "Nova", rating: 1215, best: 2280 },
     { name: "Flux", rating: 1168, best: 2060 },
@@ -40,6 +52,10 @@ const defaultState = {
 };
 
 const state = loadState();
+const rank = {
+  op: state.selectedRankOp || "mix",
+  level: Number(state.selectedRankLevel || 3)
+};
 const solo = {
   active: false,
   op: "mix",
@@ -119,6 +135,9 @@ function bindElements() {
     "battleFeedback",
     "botName",
     "recordSummary",
+    "rankBoardLabel",
+    "rankLevel",
+    "rankLevelLabel",
     "bestBattle",
     "leaderboardRows",
     "clearLocalData",
@@ -144,6 +163,19 @@ function bindEvents() {
     button.addEventListener("click", () => {
       battle.op = button.dataset.battleOp;
       setActiveChip("[data-battle-op]", button);
+      state.selectedRankOp = battle.op;
+      rank.op = battle.op;
+      saveState();
+      renderAll();
+    });
+  });
+
+  document.querySelectorAll("[data-rank-op]").forEach((button) => {
+    button.addEventListener("click", () => {
+      rank.op = button.dataset.rankOp;
+      state.selectedRankOp = rank.op;
+      saveState();
+      renderLeaderboard();
     });
   });
 
@@ -155,6 +187,17 @@ function bindEvents() {
   els.battleLevel.addEventListener("input", () => {
     battle.level = Number(els.battleLevel.value);
     els.battleLevelLabel.textContent = String(battle.level);
+    rank.level = battle.level;
+    state.selectedRankLevel = battle.level;
+    saveState();
+    renderAll();
+  });
+
+  els.rankLevel.addEventListener("input", () => {
+    rank.level = Number(els.rankLevel.value);
+    state.selectedRankLevel = rank.level;
+    saveState();
+    renderLeaderboard();
   });
 
   els.startSolo.addEventListener("click", startSolo);
@@ -286,13 +329,14 @@ function finishSolo() {
 
 function queueBattle() {
   if (battle.active || battle.queued) return;
+  const board = getBoardStats(battle.op, battle.level);
   battle.queued = true;
   battle.botName = botNames[Math.floor(Math.random() * botNames.length)];
   state.analytics.battleQueues += 1;
   trackEvent("Battle Queue", {
     level: battle.level,
     operation: battle.op,
-    rating: state.rating
+    rating: board.rating
   });
   saveState();
   els.queueBattle.disabled = true;
@@ -303,6 +347,7 @@ function queueBattle() {
 }
 
 function startBattle() {
+  const board = getBoardStats(battle.op, battle.level);
   battle.queued = false;
   battle.active = true;
   battle.timer = ROUND_SECONDS;
@@ -316,7 +361,7 @@ function startBattle() {
     level: battle.level,
     operation: battle.op,
     opponent: "bot",
-    rating: state.rating
+    rating: board.rating
   });
   saveState();
   els.queueCopy.textContent = `${battle.botName} joined.`;
@@ -359,8 +404,9 @@ function submitBattle(event) {
 function scheduleBotAnswer() {
   clearTimeout(battle.botInterval);
   if (!battle.active) return;
+  const board = getBoardStats(battle.op, battle.level);
   const baseDelay = 2100 - battle.level * 180;
-  const ratingPressure = Math.max(-350, Math.min(350, state.rating - 1000));
+  const ratingPressure = Math.max(-350, Math.min(350, board.rating - 1000));
   const adjusted = baseDelay - ratingPressure * 0.9 + Math.random() * 900;
   const delay = Math.max(620, adjusted);
   battle.botInterval = setTimeout(() => {
@@ -386,7 +432,10 @@ function finishBattle() {
 
   const won = battle.playerScore >= battle.botScore;
   const delta = won ? 24 : -18;
-  state.rating = Math.max(100, state.rating + delta);
+  const board = getBoardStats(battle.op, battle.level);
+  board.rating = Math.max(100, board.rating + delta);
+  board.best = Math.max(board.best, battle.playerScore);
+  state.rating = board.rating;
   state.bestBattle = Math.max(state.bestBattle, battle.playerScore);
   state.analytics.battleFinishes += 1;
   if (won) {
@@ -396,16 +445,17 @@ function finishBattle() {
     state.losses += 1;
     state.streak = 0;
   }
+  board.wins += won ? 1 : 0;
+  board.losses += won ? 0 : 1;
   trackEvent("Battle Finish", {
     botScore: battle.botScore,
     level: battle.level,
     operation: battle.op,
     opponent: "bot",
     playerScore: battle.playerScore,
-    rating: state.rating,
+    rating: board.rating,
     result: won ? "win" : "loss"
   });
-  syncPlayerLeaderboard();
   saveState();
 
   els.battleQuestion.textContent = won ? "Victory" : "Defeat";
@@ -508,10 +558,11 @@ function renderAll() {
 }
 
 function renderProfile() {
+  const board = getBoardStats(battle.op, battle.level);
   if (document.activeElement !== els.playerNameInput) {
     els.playerNameInput.value = getPlayerName();
   }
-  els.profileRating.textContent = String(state.rating);
+  els.profileRating.textContent = String(board.rating);
   els.profileStreak.textContent = String(state.streak);
   els.profileIntent.textContent = String(state.paywallIntent);
 }
@@ -541,16 +592,18 @@ function renderBattle() {
 }
 
 function renderLeaderboard() {
-  syncPlayerLeaderboard();
-  const rows = [...state.leaderboard].sort((a, b) => b.rating - a.rating || b.best - a.best);
+  syncRankControls();
+  const board = getBoardStats(rank.op, rank.level);
+  const rows = getRankRows(rank.op, rank.level);
   els.leaderboardRows.innerHTML = rows
     .map((entry, index) => {
       const current = entry.isPlayer ? " class=\"current-player\"" : "";
       return `<tr${current}><td>${index + 1}</td><td>${escapeHtml(entry.name)}</td><td>${entry.rating}</td><td>${entry.best}</td></tr>`;
     })
     .join("");
-  els.recordSummary.textContent = `${state.wins}-${state.losses}`;
-  els.bestBattle.textContent = String(state.bestBattle);
+  els.rankBoardLabel.textContent = getBoardLabel(rank.op, rank.level);
+  els.recordSummary.textContent = `${board.wins}-${board.losses}`;
+  els.bestBattle.textContent = String(board.best);
 }
 
 function setFormsEnabled(soloEnabled, battleEnabled) {
@@ -563,20 +616,59 @@ function formatPercent(correct, attempts) {
   return `${Math.round((correct / attempts) * 100)}%`;
 }
 
-function syncPlayerLeaderboard() {
+function syncRankControls() {
+  document.querySelectorAll("[data-rank-op]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.rankOp === rank.op);
+  });
+  els.rankLevel.value = String(rank.level);
+  els.rankLevelLabel.textContent = String(rank.level);
+}
+
+function getRankRows(op, level) {
+  const board = getBoardStats(op, level);
   const playerName = getPlayerName();
-  const player =
-    state.leaderboard.find((entry) => entry.isPlayer) ||
-    state.leaderboard.find((entry) => entry.name === playerName) ||
-    state.leaderboard.find((entry) => entry.name === DEFAULT_PLAYER_NAME);
-  if (player) {
-    player.isPlayer = true;
-    player.name = playerName;
-    player.rating = state.rating;
-    player.best = state.bestBattle;
-  } else {
-    state.leaderboard.push({ name: playerName, rating: state.rating, best: state.bestBattle, isPlayer: true });
+  return [
+    ...rankBotNames.map((name, index) => createRankBot(name, index, op, level)),
+    { name: playerName, rating: board.rating, best: board.best, isPlayer: true }
+  ].sort((a, b) => b.rating - a.rating || b.best - a.best);
+}
+
+function createRankBot(name, index, op, level) {
+  const seed = hashString(`${op}:${level}:${name}`);
+  const opBonus = rankOperations.indexOf(op) * 9;
+  const rating = 860 + level * 66 + opBonus + ((seed + index * 37) % 310);
+  const best = 680 + level * 175 + ((seed + index * 53) % 1450);
+  return { name, rating, best };
+}
+
+function getBoardStats(op, level) {
+  const key = getBoardKey(op, level);
+  if (!state.boardStats || typeof state.boardStats !== "object") state.boardStats = {};
+  if (!state.boardStats[key]) {
+    state.boardStats[key] = {
+      best: op === "mix" && level === 3 ? Number(state.bestBattle || 0) : 0,
+      losses: op === "mix" && level === 3 ? Number(state.losses || 0) : 0,
+      rating: op === "mix" && level === 3 ? Number(state.rating || 1000) : 1000,
+      wins: op === "mix" && level === 3 ? Number(state.wins || 0) : 0
+    };
   }
+  return state.boardStats[key];
+}
+
+function getBoardKey(op, level) {
+  return `${op}:L${level}`;
+}
+
+function getBoardLabel(op, level) {
+  return `${operationLabels[op]} L${level}`;
+}
+
+function hashString(value) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
 }
 
 function updatePlayerName(value) {
@@ -613,12 +705,13 @@ function sanitizePlayerName(value) {
 }
 
 function recordPaywallIntent() {
+  const board = getBoardStats(battle.op, battle.level);
   state.paywallIntent += 1;
   state.analytics.paywallTaps += 1;
   trackEvent("Pro Intent", {
     annualPrice: "29.99",
     monthlyPrice: "4.99",
-    rating: state.rating,
+    rating: board.rating,
     source: "pro_screen"
   });
   saveState();
@@ -642,6 +735,8 @@ function clearLocalData() {
   battle.playerScore = 0;
   battle.botScore = 0;
   battle.current = null;
+  rank.op = state.selectedRankOp;
+  rank.level = state.selectedRankLevel;
   els.queueBattle.disabled = false;
   els.battleQuestion.textContent = "Queue for a match";
   els.battleFeedback.textContent = "Win battles to climb the season board.";

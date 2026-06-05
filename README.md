@@ -7,7 +7,7 @@ A dependency-free public-beta prototype for validating a mental math training ar
 - Solo 60-second drills for addition, subtraction, multiplication, division, and mixed sets.
 - Five difficulty levels with progressively larger numbers and harder operations.
 - Bot-backed 45-second arena battles so early users always get a match.
-- Local seasonal leaderboard, player rating, win/loss record, streaks, and best scores.
+- Separate local rankings by operation and level, with board-specific rating, record, and best score.
 - Editable player name persisted locally and reflected in battles and rankings.
 - Mock Pro subscription CTA that records purchase intent without collecting payment.
 - PWA manifest and service worker for installable/offline behavior when served over HTTP.
