@@ -72,5 +72,16 @@ git remote add origin https://github.com/pakshingho/mental_math_arena.git
 git push -u origin main
 ```
 
-3. In GitHub, open repository settings, go to Pages, and set the source to GitHub Actions.
-4. The included workflow deploys the static site from the repository root.
+3. In GitHub, open repository settings, go to Actions > General > Workflow permissions, and select Read and write permissions.
+4. After the first production workflow creates the `gh-pages` branch, open Settings > Pages and set the source to Deploy from a branch, branch `gh-pages`, folder `/ (root)`.
+5. The included production workflow deploys `main` to the root of `gh-pages`.
+
+## Preview Pull Requests
+
+PR previews deploy to the same GitHub Pages site under a separate path:
+
+```text
+https://pakshingho.github.io/mental_math_arena/pr-preview/pr-<number>/
+```
+
+When a pull request is opened, updated, reopened, or closed, the `Deploy PR preview to GitHub Pages` workflow builds the static files, writes them to `gh-pages/pr-preview/pr-<number>/`, comments the preview URL on the PR, and removes the preview after the PR closes.
