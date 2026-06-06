@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f1e8" />
+    <meta name="theme-color" content="#050607" />
     <title>Mental Math Arena</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.svg" />
@@ -24,7 +24,7 @@
         <div class="brand-lockup" aria-label="Mental Math Arena">
           <img src="icon.svg" alt="" class="brand-mark" />
           <div>
-            <p class="eyebrow">Beta Ladder</p>
+            <p class="eyebrow">Live Cabinet</p>
             <h1>Mental Math Arena</h1>
           </div>
         </div>
@@ -65,8 +65,8 @@
         <section class="view active" id="trainView" aria-labelledby="trainTitle">
           <div class="work-surface trainer-surface">
             <section class="control-panel" aria-labelledby="trainTitle">
-              <p class="eyebrow">Daily Set</p>
-              <h2 id="trainTitle">Speed Practice</h2>
+              <p class="eyebrow">Player Controls</p>
+              <h2 id="trainTitle">Solo Score Attack</h2>
               <div class="segmented" aria-label="Operation">
                 <button class="chip active" data-solo-op="mix" type="button">Mix</button>
                 <button class="chip" data-solo-op="add" type="button">Add</button>
@@ -110,6 +110,20 @@
                 />
                 <button class="primary-action" type="submit">Submit</button>
               </form>
+              <div class="number-pad" aria-label="Arcade number pad">
+                <button type="button" data-solo-key="1">1</button>
+                <button type="button" data-solo-key="2">2</button>
+                <button type="button" data-solo-key="3">3</button>
+                <button type="button" data-solo-key="4">4</button>
+                <button type="button" data-solo-key="5">5</button>
+                <button type="button" data-solo-key="6">6</button>
+                <button type="button" data-solo-key="7">7</button>
+                <button type="button" data-solo-key="8">8</button>
+                <button type="button" data-solo-key="9">9</button>
+                <button class="danger-key" type="button" data-solo-key="back">Del</button>
+                <button type="button" data-solo-key="0">0</button>
+                <button class="enter-key" type="button" data-solo-key="enter">Enter</button>
+              </div>
               <p class="feedback" id="soloFeedback">Pick a mode and start the drill.</p>
             </section>
 
@@ -136,8 +150,8 @@
         <section class="view" id="arenaView" aria-labelledby="arenaTitle">
           <div class="work-surface arena-surface">
             <section class="control-panel">
-              <p class="eyebrow">Ranked Match</p>
-              <h2 id="arenaTitle">Head-to-Head Sprint</h2>
+              <p class="eyebrow">Live Match</p>
+              <h2 id="arenaTitle">Math Arena League</h2>
               <div class="segmented" aria-label="Battle operation">
                 <button class="chip active" data-battle-op="mix" type="button">Mix</button>
                 <button class="chip" data-battle-op="add" type="button">Add</button>
@@ -186,8 +200,8 @@
         <section class="view" id="leaderboardView" aria-labelledby="leaderboardTitle">
           <div class="work-surface leaderboard-surface">
             <section class="control-panel">
-              <p class="eyebrow">Skill Boards</p>
-              <h2 id="leaderboardTitle">Leaderboard</h2>
+              <p class="eyebrow">League Standings</p>
+              <h2 id="leaderboardTitle">Season Table</h2>
               <div class="segmented" aria-label="Rank operation">
                 <button class="chip active" data-rank-op="mix" type="button">Mix</button>
                 <button class="chip" data-rank-op="add" type="button">Add</button>
@@ -219,10 +233,12 @@
               <table class="rank-table">
                 <thead>
                   <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Rating</th>
-                    <th>Best</th>
+                    <th>Pos</th>
+                    <th>Team</th>
+                    <th>P</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>Pts</th>
                   </tr>
                 </thead>
                 <tbody id="leaderboardRows"></tbody>

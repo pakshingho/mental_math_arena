@@ -179,6 +179,10 @@ function bindEvents() {
     });
   });
 
+  document.querySelectorAll("[data-solo-key]").forEach((button) => {
+    button.addEventListener("click", () => handleSoloKey(button.dataset.soloKey));
+  });
+
   els.soloLevel.addEventListener("input", () => {
     solo.level = Number(els.soloLevel.value);
     els.soloLevelLabel.textContent = String(solo.level);
@@ -213,6 +217,22 @@ function bindEvents() {
   });
 
   window.addEventListener("resize", drawArenaCanvas);
+}
+
+function handleSoloKey(key) {
+  if (!els.soloAnswer || els.soloAnswer.disabled) return;
+  if (key === "back") {
+    els.soloAnswer.value = els.soloAnswer.value.slice(0, -1);
+  } else if (key === "enter") {
+    if (typeof els.soloForm.requestSubmit === "function") {
+      els.soloForm.requestSubmit();
+    } else {
+      els.soloForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    }
+  } else {
+    els.soloAnswer.value += key;
+  }
+  els.soloAnswer.focus();
 }
 
 function showTab(tab) {
@@ -598,7 +618,10 @@ function renderLeaderboard() {
   els.leaderboardRows.innerHTML = rows
     .map((entry, index) => {
       const current = entry.isPlayer ? " class=\"current-player\"" : "";
-      return `<tr${current}><td>${index + 1}</td><td>${escapeHtml(entry.name)}</td><td>${entry.rating}</td><td>${entry.best}</td></tr>`;
+      const played = entry.isPlayer ? board.wins + board.losses : 8;
+      const wins = entry.isPlayer ? board.wins : Math.max(1, 7 - index);
+      const losses = entry.isPlayer ? board.losses : Math.max(0, played - wins);
+      return `<tr${current}><td>${index + 1}</td><td>${escapeHtml(entry.name)}</td><td>${played}</td><td>${wins}</td><td>${losses}</td><td>${entry.rating}</td></tr>`;
     })
     .join("");
   els.rankBoardLabel.textContent = getBoardLabel(rank.op, rank.level);
@@ -819,69 +842,53 @@ function drawArenaCanvas() {
   const width = canvas.width;
   const height = canvas.height;
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#fffdf7";
+  ctx.fillStyle = "#050607";
   ctx.fillRect(0, 0, width, height);
 
-  ctx.strokeStyle = "#d7d1c5";
+  ctx.strokeStyle = "#17242b";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(18, 18, width - 36, height - 36);
+  ctx.strokeStyle = "#1e8f3f";
   ctx.lineWidth = 1;
-  for (let x = 24; x < width; x += 36) {
-    ctx.beginPath();
-    ctx.moveTo(x, 24);
-    ctx.lineTo(x, height - 24);
-    ctx.stroke();
-  }
-  for (let y = 24; y < height; y += 36) {
-    ctx.beginPath();
-    ctx.moveTo(24, y);
-    ctx.lineTo(width - 24, y);
-    ctx.stroke();
-  }
+  ctx.strokeRect(30, 30, width - 60, 72);
 
-  ctx.fillStyle = "#17211c";
-  ctx.font = "800 24px system-ui, sans-serif";
-  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffea00";
+  ctx.font = "800 26px Courier New, monospace";
+  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("Today's Skill Map", 32, 42);
+  ctx.fillText("MENTAL MATH ARENA", width / 2, 54);
 
-  ctx.fillStyle = "#68746d";
-  ctx.font = "700 15px system-ui, sans-serif";
-  ctx.fillText("Accuracy, pace, and rating pressure by operation", 32, 68);
+  ctx.fillStyle = "#24e05f";
+  ctx.font = "700 14px Courier New, monospace";
+  ctx.fillText("LIVE LADDER  //  SCORE ATTACK  //  SEASON TABLE", width / 2, 82);
 
   const lanes = [
-    { label: "ADD", value: "87", color: "#1f8a62" },
-    { label: "MUL", value: "42", color: "#2f6fba" },
-    { label: "DIV", value: "19", color: "#dca82e" },
-    { label: "SUB", value: "64", color: "#d95542" }
+    { label: "RANK", value: "03", color: "#ff2436" },
+    { label: "SCORE", value: "12,850", color: "#ffea00" },
+    { label: "STREAK", value: "12", color: "#24e05f" }
   ];
 
   lanes.forEach((lane, index) => {
-    const x = 32 + index * 140;
-    const y = 106;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(x, y, 112, 92);
-    ctx.strokeStyle = "#d7d1c5";
+    const widths = [128, 190, 128];
+    const x = 42 + index * 184;
+    const y = 126;
+    const cardWidth = widths[index];
+    ctx.fillStyle = "#080b0c";
+    ctx.fillRect(x, y, cardWidth, 82);
+    ctx.strokeStyle = lane.color;
     ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, 112, 92);
-
+    ctx.strokeRect(x, y, cardWidth, 82);
     ctx.fillStyle = lane.color;
-    ctx.fillRect(x, y, 112, 8);
-
-    ctx.fillStyle = "#17211c";
-    ctx.font = "800 18px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(lane.label, x + 56, y + 34);
-    ctx.font = "800 34px SFMono-Regular, Consolas, monospace";
-    ctx.fillText(lane.value, x + 56, y + 67);
+    ctx.font = "800 15px Courier New, monospace";
+    ctx.fillText(lane.label, x + cardWidth / 2, y + 24);
+    ctx.font = index === 1 ? "800 34px Courier New, monospace" : "800 38px Courier New, monospace";
+    ctx.fillText(lane.value, x + cardWidth / 2, y + 58);
   });
 
-  ctx.fillStyle = "#eef4ee";
-  ctx.fillRect(32, 220, width - 64, 14);
-  ctx.fillStyle = "#1f8a62";
-  ctx.fillRect(32, 220, Math.round((width - 64) * 0.72), 14);
-  ctx.fillStyle = "#68746d";
-  ctx.font = "700 13px system-ui, sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("Season readiness", 32, 244);
-  ctx.textAlign = "right";
-  ctx.fillText("72%", width - 32, 244);
+  ctx.fillStyle = "#14191a";
+  ctx.fillRect(46, 228, width - 92, 12);
+  ctx.fillStyle = "#ffb000";
+  ctx.fillRect(46, 228, Math.round((width - 92) * 0.72), 12);
+  ctx.fillStyle = "#24e05f";
+  ctx.fillRect(width - 96, 228, 50, 12);
 }

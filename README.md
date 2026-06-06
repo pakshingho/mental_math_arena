@@ -14,7 +14,7 @@ A dependency-free public-beta prototype for validating a mental math training ar
 
 ## Visual Direction
 
-The current interface uses a cleaner competitive training dashboard: light graph-paper texture, focused score panels, a dark answer board, and restrained league cues. It avoids both glassy AI styling and heavy novelty styling.
+The current interface combines an arcade scoreboard cabinet for the main arena with a sports league table for rankings: black panels, neon score colors, compact match cards, keypad controls, and standings-style ranking rows.
 
 ## Run Locally
 
