@@ -1,4 +1,4 @@
-name: Deploy static site to GitHub Pages
+name: Deploy production site to GitHub Pages
 
 on:
   push:
@@ -6,32 +6,31 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: "pages-production"
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - name: Prepare static site
+        run: |
+          mkdir -p preview-site
+          cp index.html styles.css app.js manifest.json sw.js icon.svg preview-site/
+          touch preview-site/.nojekyll
 
-      - name: Upload static site
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy production site
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: "."
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          branch: gh-pages
+          folder: preview-site
+          clean: true
+          clean-exclude: pr-preview/
+          force: false
+          commit-message: Deploy production site
