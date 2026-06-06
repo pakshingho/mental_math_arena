@@ -739,9 +739,9 @@ function clearLocalData() {
   rank.level = state.selectedRankLevel;
   els.queueBattle.disabled = false;
   els.battleQuestion.textContent = "Queue for a match";
-  els.battleFeedback.textContent = "Win battles to climb the league table.";
+  els.battleFeedback.textContent = "Win battles to climb the season board.";
   els.battleFeedback.className = "feedback";
-  els.queueCopy.textContent = "House opponents keep the board moving.";
+  els.queueCopy.textContent = "Beta bots keep matchmaking instant.";
   renderAll();
 }
 
@@ -819,47 +819,69 @@ function drawArenaCanvas() {
   const width = canvas.width;
   const height = canvas.height;
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#11100d";
+  ctx.fillStyle = "#fffdf7";
   ctx.fillRect(0, 0, width, height);
 
-  ctx.fillStyle = "#2f2a22";
-  ctx.fillRect(18, 18, width - 36, height - 36);
-  ctx.strokeStyle = "#0a0908";
-  ctx.lineWidth = 6;
-  ctx.strokeRect(18, 18, width - 36, height - 36);
+  ctx.strokeStyle = "#d7d1c5";
+  ctx.lineWidth = 1;
+  for (let x = 24; x < width; x += 36) {
+    ctx.beginPath();
+    ctx.moveTo(x, 24);
+    ctx.lineTo(x, height - 24);
+    ctx.stroke();
+  }
+  for (let y = 24; y < height; y += 36) {
+    ctx.beginPath();
+    ctx.moveTo(24, y);
+    ctx.lineTo(width - 24, y);
+    ctx.stroke();
+  }
 
-  ctx.fillStyle = "#d94832";
-  ctx.fillRect(36, 36, width - 72, 42);
-  ctx.fillStyle = "#fff8e8";
-  ctx.font = "900 24px Arial Narrow, sans-serif";
-  ctx.textAlign = "center";
+  ctx.fillStyle = "#17211c";
+  ctx.font = "800 24px system-ui, sans-serif";
+  ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("MATH ARCADE LEAGUE", width / 2, 58);
+  ctx.fillText("Today's Skill Map", 32, 42);
+
+  ctx.fillStyle = "#68746d";
+  ctx.font = "700 15px system-ui, sans-serif";
+  ctx.fillText("Accuracy, pace, and rating pressure by operation", 32, 68);
 
   const lanes = [
-    { label: "ADD", value: "87", color: "#edbd3d" },
-    { label: "MUL", value: "42", color: "#2fa66f" },
-    { label: "DIV", value: "19", color: "#48a7b0" },
-    { label: "SUB", value: "64", color: "#f3ead7" }
+    { label: "ADD", value: "87", color: "#1f8a62" },
+    { label: "MUL", value: "42", color: "#2f6fba" },
+    { label: "DIV", value: "19", color: "#dca82e" },
+    { label: "SUB", value: "64", color: "#d95542" }
   ];
 
   lanes.forEach((lane, index) => {
-    const x = 44 + index * 140;
+    const x = 32 + index * 140;
+    const y = 106;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(x, y, 112, 92);
+    ctx.strokeStyle = "#d7d1c5";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, 112, 92);
+
     ctx.fillStyle = lane.color;
-    ctx.fillRect(x, 98, 112, 82);
-    ctx.strokeStyle = "#0a0908";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(x, 98, 112, 82);
-    ctx.fillStyle = "#171511";
-    ctx.font = "900 18px Arial Narrow, sans-serif";
-    ctx.fillText(lane.label, x + 56, 122);
-    ctx.font = "900 34px Courier New, monospace";
-    ctx.fillText(lane.value, x + 56, 154);
+    ctx.fillRect(x, y, 112, 8);
+
+    ctx.fillStyle = "#17211c";
+    ctx.font = "800 18px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(lane.label, x + 56, y + 34);
+    ctx.font = "800 34px SFMono-Regular, Consolas, monospace";
+    ctx.fillText(lane.value, x + 56, y + 67);
   });
 
-  ctx.fillStyle = "#c7d36a";
-  ctx.fillRect(48, 204, width - 96, 28);
-  ctx.fillStyle = "#1a2212";
-  ctx.font = "900 16px Courier New, monospace";
-  ctx.fillText("NEXT MATCH  45 SEC  RATING BOARD LIVE", width / 2, 219);
+  ctx.fillStyle = "#eef4ee";
+  ctx.fillRect(32, 220, width - 64, 14);
+  ctx.fillStyle = "#1f8a62";
+  ctx.fillRect(32, 220, Math.round((width - 64) * 0.72), 14);
+  ctx.fillStyle = "#68746d";
+  ctx.font = "700 13px system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("Season readiness", 32, 244);
+  ctx.textAlign = "right";
+  ctx.fillText("72%", width - 32, 244);
 }

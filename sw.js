@@ -1,4 +1,4 @@
-const CACHE_NAME = "mental-math-arena-v6";
+const CACHE_NAME = "mental-math-arena-v7";
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./icon.svg", "./manifest.json"];
 
 self.addEventListener("install", (event) => {
